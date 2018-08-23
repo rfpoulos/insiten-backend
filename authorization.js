@@ -56,9 +56,9 @@ let createToken = user =>
 let userByIdentifier = (identifier) =>
   db.query(`
       SELECT * FROM users
-      WHERE username = '${identifier}'
-      OR email = '${identifier}';
-  `);
+      WHERE username = $1
+      OR email = $1;
+  `, [identifier]);
 
 let postTokens = async (req, res) => {
   let { identifier, password } = req.body;
@@ -80,8 +80,8 @@ let postTokens = async (req, res) => {
 let createAccountInDb = (email, username, password) =>
     db.query(`
         INSERT INTO users (email, username, password)
-        VALUES ('${email}', '${username}', '${password}');
-    `);
+        VALUES ('$1', '$2', '$3');
+    `, [email, username, password]);
 
 let saltAndHashPassword = (password) =>
   bcrypt.hash(password, 10);
