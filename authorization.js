@@ -6,7 +6,7 @@ const pg = require('pg-promise')();
 const db = pg(process.env.DATABASE_URL);
 
 let checkEmployee = async (req, res, next) => {
-  let { authorization: token } = req.headers;
+  let { token: token } = req.headers;
   let payload;
   try {
     payload = await jwt.verify(token, signature);
@@ -14,8 +14,10 @@ let checkEmployee = async (req, res, next) => {
     console.log(err);
   }
 
-  if (payload.employee) {
+  if (payload.role === 'admin' || 
+        payload.role === 'employee') {
     req.jwt = payload;
+    delete req.jwt.password
     next();
   } else {
     res.send('Invalid Token');
@@ -23,7 +25,8 @@ let checkEmployee = async (req, res, next) => {
 };
 
 let checkAdmin = async (req, res, next) => {
-    let { authorization: token } = req.headers;
+    let { token: token } = req.headers;
+    console.log(token)
     let payload;
     try {
       payload = await jwt.verify(token, signature);
@@ -31,8 +34,9 @@ let checkAdmin = async (req, res, next) => {
       console.log(err);
     }
   
-    if (payload.admin) {
+    if (payload.role === 'admin') {
       req.jwt = payload;
+      delete req.jwt.password
       next();
     } else {
       res.send('Invalid Token');
@@ -42,9 +46,7 @@ let checkAdmin = async (req, res, next) => {
 let createToken = user =>
   jwt.sign(
     { 
-        userId: user.id,
-        employee: user.employee,
-        admin: user.admin,
+        ...user
     },
     signature,
     { expiresIn: '7d' }
@@ -63,11 +65,13 @@ let postTokens = async (req, res) => {
   let user = await userByIdentifier(identifier);
   user = user[0];
   let isValid = await bcrypt.compare(password, user.password);
-  if (isValid) {
+  if (isValid && user.role) {
     let token = createToken(user);
     user.token = token;
     delete user.password;
     res.send(user);
+  } else if (isValid) {
+      res.send({ role: null })
   } else {
     res.send('Invalid identifier and/or password.');
   }
