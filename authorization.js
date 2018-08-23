@@ -26,7 +26,6 @@ let checkEmployee = async (req, res, next) => {
 
 let checkAdmin = async (req, res, next) => {
     let { token: token } = req.headers;
-    console.log(token)
     let payload;
     try {
       payload = await jwt.verify(token, signature);
