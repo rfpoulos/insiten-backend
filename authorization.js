@@ -60,25 +60,28 @@ let userByIdentifier = (identifier) =>
 
 let postTokens = async (req, res) => {
   let { identifier, password } = req.body;
-  let user = await userByIdentifier(identifier);
-  user = user[0];
-  let isValid = await bcrypt.compare(password, user.password);
-  if (isValid && user.role) {
-    let token = createToken(user);
-    user.token = token;
-    delete user.password;
-    res.send(user);
-  } else if (isValid) {
-      res.send({ role: null })
-  } else {
-    res.send('Invalid identifier and/or password.');
+  try{
+    let user = await userByIdentifier(identifier);
+    user = user[0];
+    let isValid = await bcrypt.compare(password, user.password);
+    if (isValid && user.role) {
+        let token = createToken(user);
+        user.token = token;
+        delete user.password;
+        res.send(user);
+    } else if (isValid) {
+        res.send({ message: 'unauthorized' })
+    }
+  }
+  catch(err) {
+    res.send({ message: 'not user'} );
   }
 };
 
 let createAccountInDb = (email, username, password) =>
     db.query(`
         INSERT INTO users (email, username, password)
-        VALUES ('$1', '$2', '$3');
+        VALUES ($1, $2, $3);
     `, [email, username, password]);
 
 let saltAndHashPassword = (password) =>
