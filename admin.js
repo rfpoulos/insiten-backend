@@ -1,12 +1,6 @@
-require('dotenv').config()
 const express = require('express');
 const admin = new express.Router();
-const pg = require('pg-promise')();
-const db = pg(process.env.DATABASE_URL);
-
-admin.get('/user', (req, res) =>
-    res.send(req.jwt)
-);
+const db = require('./database');
 
 let addCompany = (company) =>
     db.query(`
@@ -42,6 +36,9 @@ let addCompany = (company) =>
         company.status
     ]);
 
+admin.get('/user', (req, res) =>
+    res.send(req.jwt)
+);
 admin.post('/addcompany', async (req, res) =>{
     let companyId = await addCompany(req.body);
     res.send(companyId[0]);

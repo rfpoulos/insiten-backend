@@ -2,8 +2,7 @@ require('dotenv').config()
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const signature = process.env.SIGNATURE;
-const pg = require('pg-promise')();
-const db = pg(process.env.DATABASE_URL);
+const db = require('./database')
 
 let checkEmployee = async (req, res, next) => {
   let { token: token } = req.headers;
