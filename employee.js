@@ -20,7 +20,16 @@ employee.get('/company/:id', async (req, res) => {
 
 let getCompanyNotes = (companyId) =>
     db.query(`
-    SELECT * FROM notes
+    SELECT username,
+        note,
+        timestamp,
+        name,
+        type
+    FROM notes
+    LEFT JOIN contacts
+    ON (contacts.id = notes.contactid)
+    JOIN users
+    ON (notes.userid = users.id)
     WHERE notes.companyid = $1
     ORDER BY timestamp DESC;
     `, companyId);
