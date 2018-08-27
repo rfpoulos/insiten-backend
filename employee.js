@@ -157,4 +157,63 @@ employee.post('/notes', async (req, res) => {
     res.send(notes);
 })
 
+let companyContacts = (companyId) =>
+    db.query(`
+    SELECT * FROM contacts
+    WHERE companyid = $1;
+    `, parseInt(companyId));
+
+employee.get('/companycontacts/:id', async (req, res) => {
+    let contacts = await companyContacts(req.params.id);
+    res.send(contacts);
+})
+
+let addContact = (contact) =>
+    db.query(`
+    INSERT INTO contacts
+    (
+        companyid,
+        name,
+        role,
+        phone,
+        email
+    )
+    VALUES
+    ($1, $2, $3, $4, $5)
+    RETURNING *;
+    `, [
+        contact.companyId,
+        contact.name,
+        contact.role,
+        contact.phone,
+        contact.email
+    ])
+
+employee.post('/contacts', async (req, res) => {
+    let contact = await addContact(req.body);
+    res.send(contact);
+})
+
+let updateContact = (contact) =>
+    db.query(`
+    UPDATE contacts
+    SET name = $2,
+        role = $3,
+        phone = $4,
+        email = $5
+    WHERE id = $1
+    RETURNING *;
+    `, [
+        contact.id,
+        contact.name,
+        contact.role,
+        contact.phone,
+        contact.email,
+    ])
+
+employee.put('/contacts', async (req, res) => {
+    let contact = await updateContact(req.body)
+    res.send(contact);
+})
+
 module.exports = employee;
