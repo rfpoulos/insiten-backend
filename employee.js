@@ -105,4 +105,56 @@ employee.get('/companysearch/', async (req, res) =>{
     res.send(companies);
 });
 
+let contactQuery = ({ id, query }) =>
+    db.query(`
+    SELECT contacts.name, 
+        phone,
+        email,
+        role,
+        contacts.id
+    FROM contacts
+    JOIN companies
+    ON (companies.id = contacts.companyid)
+    WHERE companyid = $1
+    AND (contacts.name ILIKE $2
+    OR email ILIKE $2
+    OR phone ILIKE $2 )
+    `, [ 
+        parseInt(id), 
+        '%' + query + '%'
+    ])
+
+employee.get('/contacts/:id/:query', async (req, res) => {
+    let contacts = await contactQuery(req.params);
+    res.send(contacts);
+})
+
+let addNote = (note, userId) =>
+    db.query(`
+    INSERT INTO notes
+    (
+        companyid,
+        userid,
+        note,
+        type,
+        timestamp,
+        contactid
+    )
+    VALUES
+    ($1, $2, $3, $4, $5, $6)
+    `, [
+        note.companyId,
+        userId,
+        note.note,
+        note.type,
+        note.timestamp,
+        note.contactId
+    ])
+
+employee.post('/notes', async (req, res) => {
+    await addNote(req.body, req.jwt.id);
+    let notes = await getCompanyNotes(req.body.companyId);
+    res.send(notes);
+})
+
 module.exports = employee;
